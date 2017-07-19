@@ -73,7 +73,7 @@ class NodeLookup(object):
       dict from integer node ID to human-readable string.
     """
     if not tf.gfile.Exists(label_path):
-      tf.logging.fatal('File does not exist %s', label_lookup_path)
+      tf.logging.fatal('File does not exist %s', label_path)
 
     # Loads mapping from string UID to human-readable string
     proto_as_ascii_lines = tf.gfile.GFile(label_path).readlines()
