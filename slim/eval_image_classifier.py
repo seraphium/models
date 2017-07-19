@@ -79,6 +79,10 @@ tf.app.flags.DEFINE_float(
 tf.app.flags.DEFINE_integer(
     'eval_image_size', None, 'Eval image size')
 
+tf.app.flags.DEFINE_integer(
+    'eval_interval_secs', None, 
+    'The minimum number of seconds between evaluations')
+
 FLAGS = tf.app.flags.FLAGS
 
 
@@ -172,19 +176,35 @@ def main(_):
       num_batches = math.ceil(dataset.num_samples / float(FLAGS.batch_size))
 
     if tf.gfile.IsDirectory(FLAGS.checkpoint_path):
-      checkpoint_path = tf.train.latest_checkpoint(FLAGS.checkpoint_path)
+      if FLAGS.eval_interval_secs:
+        checkpoint_path = FLAGS.checkpoint_path
+      else:
+        checkpoint_path = tf.train.latest_checkpoint(FLAGS.checkpoint_path)
     else:
-      checkpoint_path = FLAGS.checkpoint_path
+      if FLAGS.eval_interval_secs:
+        checkpoint_path, _ = os.path.split(FLAGS.checkpoint_path)
+      else:
+        checkpoint_path = FLAGS.checkpoint_path
 
     tf.logging.info('Evaluating %s' % checkpoint_path)
 
-    slim.evaluation.evaluate_once(
-        master=FLAGS.master,
-        checkpoint_path=checkpoint_path,
-        logdir=FLAGS.eval_dir,
-        num_evals=num_batches,
-        eval_op=list(names_to_updates.values()),
-        variables_to_restore=variables_to_restore)
+    if not FLAGS.eval_interval_secs:
+      slim.evaluation.evaluate_once(
+          master=FLAGS.master,
+          checkpoint_path=checkpoint_path,
+          logdir=FLAGS.eval_dir,
+          num_evals=num_batches,
+          eval_op=list(names_to_updates.values()),
+          variables_to_restore=variables_to_restore)
+    else:
+      slim.evaluation.evaluation_loop(
+          master=FLAGS.master,
+          checkpoint_dir=checkpoint_path,
+          logdir=FLAGS.eval_dir, 
+          num_evals=num_batches,
+          eval_op=list(names_to_updates.values()),
+          eval_interval_secs=60,
+          variables_to_restore=variables_to_restore)
 
 
 if __name__ == '__main__':
