@@ -70,6 +70,9 @@ tf.app.flags.DEFINE_integer(
 tf.app.flags.DEFINE_integer(
     'task', 0, 'Task id of the replica running the training.')
 
+tf.app.flags.DEFINE_boolean(
+    'gpu_allow_growth', False, 'Allow dynamic usage of GPU memory')
+
 ######################
 # Optimization Flags #
 ######################
@@ -551,6 +554,9 @@ def main(_):
     # Merge all summaries together.
     summary_op = tf.summary.merge(list(summaries), name='summary_op')
 
+    session_config = tf.ConfigProto()
+#    session_config.gpu_options.visible_device_list="0"
+    session_config.gpu_options.allow_growth=FLAGS.gpu_allow_growth
 
     ###########################
     # Kicks off the training. #
@@ -566,6 +572,7 @@ def main(_):
         log_every_n_steps=FLAGS.log_every_n_steps,
         save_summaries_secs=FLAGS.save_summaries_secs,
         save_interval_secs=FLAGS.save_interval_secs,
+        session_config=session_config,
         sync_optimizer=optimizer if FLAGS.sync_replicas else None)
 
 
