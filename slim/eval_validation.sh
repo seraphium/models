@@ -1,10 +1,10 @@
+source env_set.sh
 python -u eval_image_classifier.py \
-  --dataset_name=flowers \
-  --dataset_dir=/home/dl/local_repo/data \
+  --dataset_name=$DATASET_NAME \
+  --dataset_dir=$DATASET_DIR \
   --dataset_split_name=validation \
   --model_name=inception_v4 \
-  --checkpoint_path=/tmp/my_train \
+  --checkpoint_path=$TRAIN_DIR \
    --eval_dir=/tmp/eval/validation \
-  --batch_size=32 \
-  --num_examples=180
+  --batch_size=32 
 

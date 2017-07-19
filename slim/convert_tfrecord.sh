@@ -1,4 +1,5 @@
+source env_set.sh
 python download_and_convert_data.py \
-  --dataset_name=flower_photos \
-  --dataset_dir="$HOME"/data/flower/
+  --dataset_name=$DATASET_NAME \
+  --dataset_dir=$DATASET_DIR
 
