@@ -39,6 +39,7 @@ import tensorflow as tf
 from datasets import download_and_convert_cifar10
 from datasets import download_and_convert_flowers
 from datasets import download_and_convert_mnist
+from datasets import convert_tfrecord
 
 FLAGS = tf.app.flags.FLAGS
 
@@ -65,9 +66,10 @@ def main(_):
     download_and_convert_flowers.run(FLAGS.dataset_dir)
   elif FLAGS.dataset_name == 'mnist':
     download_and_convert_mnist.run(FLAGS.dataset_dir)
+  elif FLAGS.dataset_name == 'custom':
+    convert_tfrecord.run(FLAGS.dataset_dir, dataset_name=FLAGS.dataset_name)
   else:
-    raise ValueError(
-        'dataset_name [%s] was not recognized.' % FLAGS.dataset_dir)
+    convert_tfrecord.run(FLAGS.dataset_dir, dataset_name=FLAGS.dataset_name)
 
 if __name__ == '__main__':
   tf.app.run()
