@@ -5,6 +5,7 @@ python -u train_image_classifier.py \
   --dataset_dir=$DATASET_DIR \
   --checkpoint_path=$CHECKPOINT_PATH \
   --model_name=inception_v4 \
+  --clone_on_cpu \
   --checkpoint_exclude_scopes=InceptionV4/Logits,InceptionV4/AuxLogits/Aux_logits \
   --trainable_scopes=InceptionV4/Logits,InceptionV4/AuxLogits/Aux_logits \
   --train_dir=$TRAIN_DIR \
@@ -14,6 +15,6 @@ python -u train_image_classifier.py \
   --moving_average_decay=0.9999 \
   --optimizer=adam \
   --ignore_missing_vars=True \
-  --batch_size=32
+  --batch_size=4
 
 

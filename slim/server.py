@@ -45,7 +45,7 @@ def inference(file_name):
   try:
     predictions, top_k, top_names = run_inference_on_image(file_name, model_file=FLAGS.model_name)
     print(predictions)
-  except Exception as ex: 
+  except Exception as ex:
     print(ex)
     return ""
   new_url = '/static/%s' % os.path.basename(file_name)
@@ -55,7 +55,7 @@ def inference(file_name):
   for node_id, human_name in zip(top_k, top_names):
     score = predictions[node_id]
     format_string += '%s (score:%.5f)<BR>' % (human_name, score)
-  ret_string = new_tag  + format_string + '<BR>' 
+  ret_string = new_tag  + format_string + '<BR>'
   return ret_string
 
 
@@ -81,7 +81,7 @@ def root():
       type_name = 'N/A'
       print('file saved to %s' % file_path)
       out_html = inference(file_path)
-      return result + out_html 
+      return result + out_html
   return result
 
 if __name__ == "__main__":
