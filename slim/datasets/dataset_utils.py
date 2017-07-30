@@ -81,8 +81,7 @@ def download_and_uncompress_tarball(tarball_url, dataset_dir):
     sys.stdout.write('\r>> Downloading %s %.1f%%' % (
         filename, float(count * block_size) / float(total_size) * 100.0))
     sys.stdout.flush()
-  if not os.path.exists(file_path):
-    filepath, _ = urllib.request.urlretrieve(tarball_url, filepath, _progress)
+  filepath, _ = urllib.request.urlretrieve(tarball_url, filepath, _progress)
   print()
   statinfo = os.stat(filepath)
   print('Successfully downloaded', filename, statinfo.st_size, 'bytes.')
