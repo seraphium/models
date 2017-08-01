@@ -11,18 +11,17 @@ from datasets import imagenet
 
 url = "http://download.tensorflow.org/models/inception_v1_2016_08_28.tar.gz"
 
-checkpoints_dir = '/tmp/inceptionv1'
-
-# if not tf.gfile.Exists(checkpoints_dir):
-#     tf.gfile.MakeDirs(checkpoints_dir)
-#
-# dataset_utils.download_and_uncompress_tarball(url, checkpoints_dir)
 
 image_size = inception.inception_v1.default_image_size
+batch_size = 5
+
+train_dir = '/tmp/inception_finetuned'
+flowers_data_dir = "/home/jackie/dev/data/flowers"
+
 
 
 #load batch data
-def load_batch(dataset, batch_size=5, height=299, width=299, is_training=False):
+def load_batch(dataset, batch_size=batch_size, height=299, width=299, is_training=False):
     """Loads a single batch of data.
 
         Args:
@@ -53,48 +52,31 @@ def load_batch(dataset, batch_size=5, height=299, width=299, is_training=False):
                                                capacity=2 * batch_size)
     return images, image_raw, labels
 
-def get_init_fn():
-    """Returns a function run by the chief worker to warm-start the training."""
-    checkpoint_exclude_scopes = ['InceptionV1/Logits', 'InceptionV1/AuxLogits']
-    exclusions = [scope.strip() for scope in checkpoint_exclude_scopes]
-    variables_to_restore = []
-    for var in slim.get_model_variables():
-        excluded = False
-        for exclude in exclusions:
-            if var.op.name.startswith(exclude):
-                excluded = True
-        if not excluded:
-            variables_to_restore.append(var)
-
-    return slim.assign_from_checkpoint_fn(
-        os.path.join(checkpoints_dir, 'inception_v1.ckpt'), variables_to_restore)
-
-
-train_dir = '/tmp/inception_finetuned'
-flowers_data_dir = "/home/jackie/dev/data/flowers"
 
 with tf.Graph().as_default():
     tf.logging.set_verbosity(tf.logging.INFO)
     dataset = flowers.get_split('train', flowers_data_dir)
-    images, _,  labels = load_batch(dataset, height=image_size, width=image_size)
+    images, images_raw,  labels = load_batch(dataset, height=image_size, width=image_size)
 
     with slim.arg_scope(inception.inception_v1_arg_scope()):
         logits, _ = inception.inception_v1(images, num_classes=dataset.num_classes, is_training=True)
 
-    one_hot_labels = slim.one_hot_encoding(labels, dataset.num_classes)
-    slim.losses.softmax_cross_entropy(logits, one_hot_labels)
-    total_loss = slim.losses.get_total_loss()
+    probabilities = tf.nn.softmax(logits)
+    checkpoint_path = tf.train.latest_checkpoint(train_dir)
 
-    tf.summary.scalar('Losses/Total_Losses', total_loss)
+    init_fn = slim.assign_from_checkpoint_fn(checkpoint_path, slim.get_variables_to_restore())
 
-    optimizer = tf.train.AdamOptimizer(learning_rate=0.01)
-    train_op  = slim.learning.create_train_op(total_loss, optimizer)
+    with tf.Session() as sess:
+        with slim.queues.QueueRunners(sess):
+            sess.run(tf.initialize_local_variables())
+            init_fn(sess)
+            np_probabilities, np_image_raw, np_labels = sess.run([probabilities, images_raw, labels])
+            for i in range(batch_size):
+                image = np_image_raw[i, :, :, :,]
+                true_label = np_labels[i]
+                predicted_label = np.argmax(np_probabilities[i, :])
+                predicted_name = dataset.labels_to_names[predicted_label]
+                true_name = dataset.labels_to_names[true_label]
+                print("%d: predict: %s  true:%s" % (i, predicted_name, true_name))
 
-    final_loss = slim.learning.train(
-        train_op,
-        logdir=train_dir,
-        init_fn=get_init_fn(),
-        number_of_steps=2
-    )
 
-print('Finished training. Last batch loss %f' % final_loss)
